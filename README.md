@@ -1,6 +1,14 @@
 # openvino-tf-experiment
 
-## Install prerequisites
+## Contents
+
+1. <a href="#prerequisites">Install prerequisites</a>
+2. <a href="#download">Download the TensorFlow model</a>
+3. <a href="#tf-infer">Infer the model on TensorFlow</a>
+4. <a href="#convert">Create Intermediate Representation of the model (IR) for Inference Engine</a>
+5. <a href="#ie-infer">Infer the model on Inference Engine</a>
+
+## Install prerequisites <a name="prerequisites"></a>
 
 > **NOTE**: This is the Ubuntu 16.04 tutorial. Should not be a problem for Ubuntu 18. For Windows there
 > can be minor changes required due to specificity of using Python and related packages
@@ -42,7 +50,7 @@
     sudo apt-get install python3-tk
     ```
 
-## Download the TensorFlow model
+## Download the TensorFlow model <a name="download"></a>
 
 1. Download the TensorFlow Mobilenet model:
 
@@ -62,12 +70,12 @@
 
 3. If you want, inspect it with [Netron](https://lutzroeder.github.io/netron/) or Tensorboard.
 
-## Infer the model on TensorFlow
+## Infer the model on TensorFlow <a name="tf-infer"></a>
 
-Lines 20-43 correspond to the `tf_main` function that performs inference.
-Lines 115-119 run the inference and create the output image.
+* Lines 20-43 correspond to the `tf_main` function that performs inference.
+* Lines 115-119 run the inference and create the output image.
 
-## Create Intermediate Representation of the model (IR) for Inference Engine
+## Create Intermediate Representation of the model (IR) for Inference Engine <a name="convert"></a>
 
 1. Read more about the way a model is prepared for inference and what is Inference Engine IR (Intermediate Representation) format.
    Explore [the format](https://docs.openvinotoolkit.org/latest/_docs_MO_DG_prepare_model_convert_model_IRLayersCatalogSpec.html)
@@ -93,7 +101,7 @@ Lines 115-119 run the inference and create the output image.
                 --output_dir ~/Projects/openvino-tf-experiment/data/object_detection/common/ssd_mobilenet_v2_coco/tf/ `# where to store all the models`
    ```
 
-## Infer the model on Inference Engine
+## Infer the model on Inference Engine <a name="ie-infer"></a>
 
-Lines 46-90 correspond to the `ie_main` function that performs inference.
-Lines 121-130 run the inference and create the output image.
+* Lines 46-90 correspond to the `ie_main` function that performs inference.
+* Lines 121-130 run the inference and create the output image.
