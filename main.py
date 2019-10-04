@@ -51,7 +51,7 @@ def ie_main(path_to_model_xml, path_to_model_bin, path_to_original_image,
     log.info("Initializing plugin for {} device...".format(device))
     plugin = IEPlugin(device)
 
-    if 'CPU' == device:
+    if 'CPU' == device and cpu_extensions:
         plugin.add_cpu_extension(cpu_extensions)
 
     log.info("Reading IR...")
@@ -95,17 +95,17 @@ if __name__ == '__main__':
 
     IMAGE = './data/images/input/cat_on_snow.jpg'
 
-    SSD_ASSETS = './data/object_detection/common/ssd_mobilenet_v2_coco/tf/'
+    SSD_ASSETS = './data/public/ssd_mobilenet_v2_coco'
 
-    TF_MODEL = os.path.join(SSD_ASSETS, 'ssd_mobilenet_v2_coco.frozen.pb')
+    TF_MODEL = os.path.join(SSD_ASSETS, 'ssd_mobilenet_v2_coco_2018_03_29', 'frozen_inference_graph.pb')
     TF_RESULT_IMAGE = './data/images/output/tensorflow_output.png'
 
-    IE_MODEL_XML = os.path.join(SSD_ASSETS, 'ssd_mobilenet_v2_coco_ir.xml')
-    IE_MODEL_BIN = os.path.join(SSD_ASSETS, 'ssd_mobilenet_v2_coco_ir.bin')
+    IE_MODEL_XML = os.path.join(SSD_ASSETS, 'FP32', 'ssd_mobilenet_v2_coco_ir.xml')
+    IE_MODEL_BIN = os.path.join(SSD_ASSETS, 'FP32', 'ssd_mobilenet_v2_coco_ir.bin')
     IE_RESULT_IMAGE = './data/images/output/inference_engine_output.png'
 
-    OPENVINO = '/home/demidovs/intel/openvino_2019.1.085/'
-    OPENVINO_EXTENSIONS = 'deployment_tools/inference_engine/lib/intel64/libcpu_extension_sse4.so'
+    OPENVINO = '/home/dev/intel/openvino'
+    OPENVINO_EXTENSIONS = 'deployment_tools/inference_engine/samples/build/intel64/Release/lib/libcpu_extension.so'
     IE_EXTENSIONS = os.path.join(OPENVINO, OPENVINO_EXTENSIONS)
 
     COMBO_RESULT_IMAGE = './data/images/output/combo_output.png'
