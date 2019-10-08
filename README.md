@@ -40,7 +40,7 @@
     ```bash
     cd ~/intel/openvino/python
     pip3 install -r requirements.txt
-    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!export PYTHONPATH=~/intel/openvino/python/python3.6/:$PYTHONPATH
+    export PYTHONPATH=~/intel/openvino/python/python3.6/:$PYTHONPATH
     ```
 
     2.4. Install local dependencies:
