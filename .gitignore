@@ -1,4 +1,6 @@
 object_detection
 public
+data/inference_output/*.csv
+data/inference_output/*.xml
 __pycache__
 *.tar.gz

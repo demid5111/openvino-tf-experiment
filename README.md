@@ -125,3 +125,28 @@ following command:
 cd ~/Projects/openvino-tf-experiment
 python3 main.py
 ```
+
+## Collect performance with the benchmarking application
+
+Using the Python wrapper introduces small overheads due to time needed to pass
+execution from the Python level to the C++ one and back when the result is ready.
+In order to collect best possible performance, use the benchmarking application
+inside the package.
+
+```sh
+cd ~/intel/openvino/deployment_tools/inference_engine/samples/build/intel64/Release/
+./benchmark_app -i ~/Projects/openvino-tf-experiment/data/images/input/cat_on_snow.jpg `# input image`\
+                -m ~/Projects/openvino-tf-experiment/data/public/ssd_mobilenet_v2_coco/FP32/ssd_mobilenet_v2_coco.xml `# input model`\
+                -t 10 `# time to run model`
+```
+
+Also, you can review the detailed statistics of the network on per-layer basis:
+
+```sh
+./benchmark_app -i ~/Projects/openvino-tf-experiment/data/images/input/cat_on_snow.jpg `# input image`\
+                -m ~/Projects/openvino-tf-experiment/data/public/ssd_mobilenet_v2_coco/FP32/ssd_mobilenet_v2_coco.xml `# input model`\
+                -t 10 `# time to run model`\
+                -report_type average_counters `# collect per-layer statistics`\
+                -report_folder ~/Projects/openvino-tf-experiment/data/inference_output `# where to store statistics`\
+                -exec_graph_path ~/Projects/openvino-tf-experiment/data/inference_output/exec_graph.xml `# where to store execution graph`
+```
