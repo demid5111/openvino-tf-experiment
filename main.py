@@ -3,7 +3,8 @@ Main experimenting logic
 """
 import os
 import sys
-# sys.path.insert(0, '~/intel/openvino_2019.1.085/python/python3.5')
+import platform
+# sys.path.insert(0, '~/intel/openvino_2019.3.334/python/python3.5')
 
 import time
 import cv2
@@ -100,12 +101,22 @@ if __name__ == '__main__':
     TF_MODEL = os.path.join(SSD_ASSETS, 'ssd_mobilenet_v2_coco_2018_03_29', 'frozen_inference_graph.pb')
     TF_RESULT_IMAGE = './data/images/output/tensorflow_output.png'
 
-    IE_MODEL_XML = os.path.join(SSD_ASSETS, 'FP32', 'ssd_mobilenet_v2_coco_ir.xml')
-    IE_MODEL_BIN = os.path.join(SSD_ASSETS, 'FP32', 'ssd_mobilenet_v2_coco_ir.bin')
+    IE_MODEL_XML = os.path.join(SSD_ASSETS, 'FP32', 'ssd_mobilenet_v2_coco.xml')
+    IE_MODEL_BIN = os.path.join(SSD_ASSETS, 'FP32', 'ssd_mobilenet_v2_coco.bin')
     IE_RESULT_IMAGE = './data/images/output/inference_engine_output.png'
 
     OPENVINO = '/home/dev/intel/openvino'
-    OPENVINO_EXTENSIONS = 'deployment_tools/inference_engine/samples/build/intel64/Release/lib/libcpu_extension.so'
+    OPENVINO_EXTENSIONS_DIR = 'deployment_tools/inference_engine/samples/build/intel64/Release/lib/'
+    
+    if platform.system() == 'Darwin':
+        ext = '.dylib'
+    elif platform.system() == 'Linux':
+        ext = '.so'
+    else:
+        print('You are running this demo on Windows OS. However, this is demo for Linux/macOS.')
+        sys.exit(0)
+
+    OPENVINO_EXTENSIONS = 'libcpu_extension{}'.format(ext)
     IE_EXTENSIONS = os.path.join(OPENVINO, OPENVINO_EXTENSIONS)
 
     COMBO_RESULT_IMAGE = './data/images/output/combo_output.png'

@@ -117,3 +117,11 @@
 
 * Lines 46-90 correspond to the `ie_main` function that performs inference.
 * Lines 121-130 run the inference and create the output image.
+
+Finally, to run inference and compare performance, run the
+following command:
+
+```sh
+cd ~/Projects/openvino-tf-experiment
+python3 main.py
+```
