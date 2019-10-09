@@ -94,6 +94,8 @@ def ie_main(path_to_model_xml, path_to_model_bin, path_to_original_image,
 if __name__ == '__main__':
     log.basicConfig(format="[ %(levelname)s ] %(message)s", level=log.INFO, stream=sys.stdout)
 
+    NUM_RUNS = 1
+
     IMAGE = './data/images/input/cat_on_snow.jpg'
 
     SSD_ASSETS = './data/public/ssd_mobilenet_v2_coco'
@@ -123,20 +125,30 @@ if __name__ == '__main__':
 
     log.info('COMMON PART: Preparing the image')
 
-    predictions, inf_time = tf_main(TF_MODEL, IMAGE, TF_RESULT_IMAGE)
-    tf_fps = 1 / inf_time
-    log.info('[TENSORFLOW] FPS: {}'.format(tf_fps))
-
+    tf_fps_collected = []
+    for i in range(NUM_RUNS):
+        predictions, inf_time = tf_main(TF_MODEL, IMAGE, TF_RESULT_IMAGE)
+        tf_fps = 1 / inf_time
+        tf_fps_collected.append(tf_fps)
+    
+    tf_avg_fps = sum(tf_fps_collected) / NUM_RUNS
+    log.info('[TENSORFLOW] FPS: {}'.format(tf_avg_fps))
+    
     draw_image(IMAGE, predictions, TF_RESULT_IMAGE, color=(255, 0, 0))
 
-    predictions, inf_time = ie_main(IE_MODEL_XML,
-                                    IE_MODEL_BIN,
-                                    IMAGE,
-                                    IE_RESULT_IMAGE,
-                                    'CPU',
-                                    cpu_extensions=IE_EXTENSIONS)
-    ie_fps = 1 / inf_time
-    log.info('[INFERENCE ENGINE] FPS: {}'.format(ie_fps))
+    ie_fps_collected = []
+    for i in range(NUM_RUNS):
+        predictions, inf_time = ie_main(IE_MODEL_XML,
+                                        IE_MODEL_BIN,
+                                        IMAGE,
+                                        IE_RESULT_IMAGE,
+                                        'CPU',
+                                        cpu_extensions=IE_EXTENSIONS)
+        ie_fps = 1 / inf_time
+        ie_fps_collected.append(ie_fps)
+    
+    ie_avg_fps = sum(ie_fps_collected) / NUM_RUNS
+    log.info('[INFERENCE ENGINE] FPS: {}'.format(ie_avg_fps))
 
     draw_image(IMAGE, predictions, IE_RESULT_IMAGE, color=(0, 0, 255))
 
@@ -145,5 +157,5 @@ if __name__ == '__main__':
     show_results_interactively(tf_image=TF_RESULT_IMAGE,
                                ie_image=IE_RESULT_IMAGE,
                                combination_image=COMBO_RESULT_IMAGE,
-                               ie_fps=ie_fps,
-                               tf_fps=tf_fps)
+                               ie_fps=ie_avg_fps,
+                               tf_fps=tf_avg_fps)
