@@ -18,20 +18,22 @@ from tf_specific import load_graph, get_refs, parse_od_output
 from common import draw_image, read_resize_image, show_results_interactively
 
 
-def tf_main(path_to_model, path_to_original_image, path_to_result_image):
+def tf_main(path_to_model, path_to_original_image, path_to_result_image, batch = 1):
     """
     Entrypoint for inferencing with TensorFlow
     """
     log.info('COMMON: image preprocessing')
     width = 300
     resized_image = read_resize_image(path_to_original_image, width, width)
-    reshaped_image = np.reshape(resized_image, (1, width, width, 3))
+    reshaped_image = np.reshape(resized_image, (width, width, 3))
+    batched_image = np.array([reshaped_image for _ in range(batch)])
+    log.info('Current shape: {}'.format(batched_image.shape))
 
     log.info('TENSORFLOW SPECIFIC: Loading a model with TensorFLow')
     graph = load_graph(path_to_model)
 
     input_data = {
-        'image_tensor': reshaped_image,
+        'image_tensor': batched_image,
     }
 
     raw_results, delta = get_refs(graph, input_data)
@@ -45,7 +47,7 @@ def tf_main(path_to_model, path_to_original_image, path_to_result_image):
 
 
 def ie_main(path_to_model_xml, path_to_model_bin, path_to_original_image,
-            path_to_result_image, device='CPU', cpu_extensions=''):
+            path_to_result_image, device='CPU', cpu_extensions='', batch=1):
     log.info('COMMON: image preprocessing')
     image = read_resize_image(path_to_original_image, 300, 300)
 
@@ -69,21 +71,23 @@ def ie_main(path_to_model_xml, path_to_model_bin, path_to_original_image,
     assert len(net.outputs) == 1, "Demo supports only single output topologies"
     input_blob = next(iter(net.inputs))
     out_blob = next(iter(net.outputs))
+    net.batch_size = batch
+    n, c, h, w = net.inputs[input_blob].shape
 
     log.info("Loading IR to the plugin...")
     exec_net = plugin.load(network=net, num_requests=2)
-    # Read and pre-process input image
-    n, c, h, w = net.inputs[input_blob].shape
     del net
 
     labels_map = None
-
+    
+    # Read and pre-process input image
     image = image[..., ::-1]
     in_frame = image.transpose((2, 0, 1))  # Change data layout from HWC to CHW
-    in_frame = in_frame.reshape((n, c, h, w))
+    batched_frame = np.array([in_frame for _ in range(batch)])
+    log.info('Current shape: {}'.format(batched_frame.shape))
 
     inference_start = time.time()
-    res = exec_net.infer(inputs={input_blob: in_frame})
+    res = exec_net.infer(inputs={input_blob: batched_frame})
     inference_end = time.time()
 
     log.info('INFERENCE ENGINE SPECIFIC: no post processing')
@@ -95,6 +99,7 @@ if __name__ == '__main__':
     log.basicConfig(format="[ %(levelname)s ] %(message)s", level=log.INFO, stream=sys.stdout)
 
     NUM_RUNS = 1
+    BATCH = 1
 
     IMAGE = './data/images/input/cat_on_snow.jpg'
 
@@ -127,11 +132,11 @@ if __name__ == '__main__':
 
     tf_fps_collected = []
     for i in range(NUM_RUNS):
-        predictions, inf_time = tf_main(TF_MODEL, IMAGE, TF_RESULT_IMAGE)
+        predictions, inf_time = tf_main(TF_MODEL, IMAGE, TF_RESULT_IMAGE, batch=BATCH)
         tf_fps = 1 / inf_time
         tf_fps_collected.append(tf_fps)
     
-    tf_avg_fps = sum(tf_fps_collected) / NUM_RUNS
+    tf_avg_fps = (sum(tf_fps_collected) * BATCH) / (NUM_RUNS)
     log.info('[TENSORFLOW] FPS: {}'.format(tf_avg_fps))
     
     draw_image(IMAGE, predictions, TF_RESULT_IMAGE, color=(255, 0, 0))
@@ -143,11 +148,12 @@ if __name__ == '__main__':
                                         IMAGE,
                                         IE_RESULT_IMAGE,
                                         'CPU',
-                                        cpu_extensions=IE_EXTENSIONS)
+                                        cpu_extensions=IE_EXTENSIONS,
+                                        batch=BATCH)
         ie_fps = 1 / inf_time
         ie_fps_collected.append(ie_fps)
     
-    ie_avg_fps = sum(ie_fps_collected) / NUM_RUNS
+    ie_avg_fps = (sum(ie_fps_collected) * BATCH) / (NUM_RUNS)
     log.info('[INFERENCE ENGINE] FPS: {}'.format(ie_avg_fps))
 
     draw_image(IMAGE, predictions, IE_RESULT_IMAGE, color=(0, 0, 255))

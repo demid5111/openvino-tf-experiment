@@ -8,6 +8,7 @@ from tensorflow.python.framework import graph_io
 import numpy as np
 import logging as log
 import time
+import os
 
 
 def load_graph(path_to_model):
@@ -88,9 +89,7 @@ def get_refs(graph, input_data):
         output_tensors.append(tensor)
 
     log.info("Running tf.Session")
-    import os
-    os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
-    # with tf.device("/cpu:0"):
+    os.environ['CUDA_VISIBLE_DEVICES'] = '-1' # force inference on CPU
     with graph.as_default():
         with tf.Session(graph=graph) as session:
             inference_start = time.time()
