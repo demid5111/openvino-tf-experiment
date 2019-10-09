@@ -71,7 +71,9 @@ def ie_main(path_to_model_xml, path_to_model_bin, path_to_original_image,
     assert len(net.outputs) == 1, "Demo supports only single output topologies"
     input_blob = next(iter(net.inputs))
     out_blob = next(iter(net.outputs))
-    net.batch_size = batch
+
+    n, c, h, w = net.inputs[input_blob].shape
+    net.reshape({input_blob: (batch, c, h, w)})
     n, c, h, w = net.inputs[input_blob].shape
 
     log.info("Loading IR to the plugin...")
