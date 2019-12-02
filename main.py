@@ -12,7 +12,7 @@ import numpy as np
 import logging as log
 
 # pylint: disable=no-name-in-module
-from openvino.inference_engine import IENetwork, IEPlugin
+from openvino.inference_engine import IENetwork, IEPlugin, IECore
 
 from tf_specific import load_graph, get_refs, parse_od_output
 from common import draw_image, read_resize_image, show_results_interactively
@@ -51,24 +51,16 @@ def ie_main(path_to_model_xml, path_to_model_bin, path_to_original_image,
     log.info('COMMON: image preprocessing')
     image = read_resize_image(path_to_original_image, 300, 300)
 
-    log.info("Initializing plugin for {} device...".format(device))
-    plugin = IEPlugin(device)
-
-    if 'CPU' == device and cpu_extensions:
-        plugin.add_cpu_extension(cpu_extensions)
-
+    # First create Network (Note you need to provide model in IR previously converted with Model Optimizer)
     log.info("Reading IR...")
     net = IENetwork(model=path_to_model_xml, weights=path_to_model_bin)
 
-    if plugin.device == "CPU":
-        supported_layers = plugin.get_supported_layers(net)
-        not_supported_layers = [l for l in net.layers.keys() if l not in supported_layers]
-        if len(not_supported_layers) != 0:
-            log.error("Following layers are not supported for specified device {}:\n {}".
-                      format(plugin.device, ', '.join(not_supported_layers)))
-            sys.exit(1)
-    assert len(net.inputs.keys()) == 1, "Demo supports only single input topologies"
-    assert len(net.outputs) == 1, "Demo supports only single output topologies"
+    # Now let's create IECore() entity 
+    log.info("Creating Inference Engine Core")   
+    ie = IECore()
+
+    ie.add_extension(extension_path=cpu_extensions, device_name=device)
+
     input_blob = next(iter(net.inputs))
     out_blob = next(iter(net.outputs))
 
@@ -76,8 +68,10 @@ def ie_main(path_to_model_xml, path_to_model_bin, path_to_original_image,
     net.reshape({input_blob: (batch, c, h, w)})
     n, c, h, w = net.inputs[input_blob].shape
 
+    # Now we load Network to plugin
     log.info("Loading IR to the plugin...")
-    exec_net = plugin.load(network=net, num_requests=2)
+    exec_net = ie.load_network(network=net, device_name=device, num_requests=2)
+
     del net
 
     labels_map = None
@@ -88,6 +82,7 @@ def ie_main(path_to_model_xml, path_to_model_bin, path_to_original_image,
     batched_frame = np.array([in_frame for _ in range(batch)])
     log.info('Current shape: {}'.format(batched_frame.shape))
 
+    # Now we run inference on target device
     inference_start = time.time()
     res = exec_net.infer(inputs={input_blob: batched_frame})
     inference_end = time.time()
@@ -126,7 +121,7 @@ if __name__ == '__main__':
         sys.exit(0)
 
     OPENVINO_EXTENSIONS = 'libcpu_extension{}'.format(ext)
-    IE_EXTENSIONS = os.path.join(OPENVINO, OPENVINO_EXTENSIONS)
+    IE_EXTENSIONS = os.path.join(OPENVINO, OPENVINO_EXTENSIONS_DIR, OPENVINO_EXTENSIONS)
 
     COMBO_RESULT_IMAGE = './data/images/output/combo_output.png'
 
